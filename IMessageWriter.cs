@@ -1,6 +1,6 @@
-﻿namespace Practice1
+﻿namespace Practice2
 {
-    interface IMessageWritter
+    interface IMessageWriter
     {
         string WriteMessage(string customMessage);
     }

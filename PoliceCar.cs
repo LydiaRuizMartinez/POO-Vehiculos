@@ -1,35 +1,75 @@
-﻿namespace Practice1
+﻿namespace Practice2
 {
-    class PoliceCar : Vehicle
+    class PoliceCar : VehicleWithPlate, IMessageWriter
     {
-        //constant string as TypeOfVehicle wont change allong PoliceCar instances
-        private const string typeOfVehicle = "Police Car"; 
+        private const string typeOfVehicle = "Police Car";
         private bool isPatrolling;
-        private SpeedRadar speedRadar;
+        private bool isPursuing;
+        private string? pursuingVehiclePlate;
+        private SpeedRadar? speedRadar;
 
-        public PoliceCar(string plate) : base(typeOfVehicle, plate)
+        public PoliceCar(string plate, SpeedRadar? radar = null) : base(typeOfVehicle, plate)
         {
             isPatrolling = false;
-            speedRadar = new SpeedRadar();
+            isPursuing = false;
+            speedRadar = radar;
         }
 
         public void UseRadar(Vehicle vehicle)
         {
             if (isPatrolling)
             {
-                speedRadar.TriggerRadar(vehicle);
-                string meassurement = speedRadar.GetLastReading();
-                Console.WriteLine(WriteMessage($"Triggered radar. Result: {meassurement}"));
+                if (speedRadar != null)
+                {
+                    if (vehicle is VehicleWithPlate vehicleWithPlate)
+                    {
+                        speedRadar.TriggerRadar(vehicleWithPlate);
+                        string measurement = speedRadar.GetLastReading();
+                        Console.WriteLine(WriteMessage($"Triggered radar. Result: {measurement}"));
+
+                        if (vehicleWithPlate.GetSpeed() > 50.0f)
+                        {
+                            PursueVehicle(vehicleWithPlate.GetPlate());
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine(WriteMessage("This police car has no radar installed."));
+                }
             }
             else
             {
-                Console.WriteLine(WriteMessage($"has no active radar."));
+                Console.WriteLine(WriteMessage("The police car is not patrolling."));
             }
         }
 
-        public bool IsPatrolling()
+        public void PursueVehicle(string vehiclePlate)
         {
-            return isPatrolling;
+            if (!isPursuing)
+            {
+                isPursuing = true;
+                pursuingVehiclePlate = vehiclePlate;
+                Console.WriteLine(WriteMessage($"Started pursuing vehicle with plate {vehiclePlate}."));
+            }
+            else
+            {
+                Console.WriteLine(WriteMessage($"Already pursuing vehicle with plate {pursuingVehiclePlate}."));
+            }
+        }
+
+        public void StopPursuit()
+        {
+            if (isPursuing)
+            {
+                isPursuing = false;
+                Console.WriteLine(WriteMessage($"Stopped pursuing vehicle with plate {pursuingVehiclePlate}."));
+                pursuingVehiclePlate = null;
+            }
+            else
+            {
+                Console.WriteLine(WriteMessage("No active pursuit to stop."));
+            }
         }
 
         public void StartPatrolling()
@@ -37,11 +77,11 @@
             if (!isPatrolling)
             {
                 isPatrolling = true;
-                Console.WriteLine(WriteMessage("started patrolling."));
+                Console.WriteLine(WriteMessage("Started patrolling."));
             }
             else
             {
-                Console.WriteLine(WriteMessage("is already patrolling."));
+                Console.WriteLine(WriteMessage("Already patrolling."));
             }
         }
 
@@ -50,21 +90,38 @@
             if (isPatrolling)
             {
                 isPatrolling = false;
-                Console.WriteLine(WriteMessage("stopped patrolling."));
+                Console.WriteLine(WriteMessage("Stopped patrolling."));
             }
             else
             {
-                Console.WriteLine(WriteMessage("was not patrolling."));
+                Console.WriteLine(WriteMessage("Was not patrolling."));
             }
+        }
+
+        public new string WriteMessage(string customMessage)
+        {
+            return $"Police Car with plate {GetPlate()}: {customMessage}";
         }
 
         public void PrintRadarHistory()
         {
-            Console.WriteLine(WriteMessage("Report radar speed history:"));
-            foreach (float speed in speedRadar.SpeedHistory)
+            if (speedRadar != null)
             {
-                Console.WriteLine(speed);
+                Console.WriteLine(WriteMessage("Radar speed history:"));
+                foreach (float speed in speedRadar.SpeedHistory)
+                {
+                    Console.WriteLine(speed);
+                }
             }
+            else
+            {
+                Console.WriteLine(WriteMessage("This police car has no radar installed."));
+            }
+        }
+
+        public bool IsPatrolling()
+        {
+            return isPatrolling;
         }
     }
 }
